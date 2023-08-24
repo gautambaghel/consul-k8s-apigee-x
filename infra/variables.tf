@@ -8,19 +8,37 @@ variable "region" {
   default     = "us-west1"
 }
 
-variable "gke_min_num_nodes" {
-  default     = 1
+variable "gke_num_nodes" {
   description = "min number of gke nodes"
+  default     = 2
+}
+
+variable "gke_min_num_nodes" {
+  description = "min number of gke nodes"
+  default     = 1
 }
 
 variable "gke_max_num_nodes" {
-  default     = 3
   description = "max number of gke nodes"
+  default     = 3
 }
 
 variable "ax_region" {
   description = "GCP region for storing Apigee analytics data (see https://cloud.google.com/apigee/docs/api-platform/get-started/install-cli)."
   type        = string
+  default     = "us-west1"
+}
+
+variable "apigee_env_name" {
+  description = "Name for the Apigee environment."
+  type        = string
+  default     = "env"
+}
+
+variable "apigee_envgroup_name" {
+  description = "Name for the Apigee environment group."
+  type        = string
+  default     = "envgroup"
 }
 
 variable "apigee_envgroups" {
@@ -64,26 +82,36 @@ variable "exposure_subnets" {
     region             = string
     secondary_ip_range = map(string)
   }))
-  default = []
+  default = [
+    {
+      name               = "apigee-exposure"
+      ip_cidr_range      = "10.100.0.0/24"
+      region             = "us-west1"
+      secondary_ip_range = null
+    }
+  ]
 }
 
 variable "network" {
-  description = "VPC name."
+  description = "VPC name"
   type        = string
+  default     = "apigee-network"
 }
 
 variable "peering_range" {
   description = "Peering CIDR range"
   type        = string
+  default     = "10.0.0.0/22"
 }
 
 variable "support_range" {
   description = "Support CIDR range of length /28 (required by Apigee for troubleshooting purposes)."
   type        = string
+  default     = "10.1.0.0/28"
 }
 
 variable "billing_account" {
-  description = "Billing account id."
+  description = "Billing account id"
   type        = string
   default     = null
 }
