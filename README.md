@@ -5,25 +5,26 @@
 The following must be installed on your local machine
 
 ```
-* Terraform
+* terraform
+* gcloud
 * curl
 * tar
 * yq
-
 ```
 
-## Create the GKE cluster & Apigee org
+## Create the GKE & Apigee
 ```
 gcloud auth login
-export APIGEE_ACCESS_TOKEN="$(gcloud config config-helper --force-auth-refresh | grep access_token | grep -o -E '[^ ]+$')";
 
 terraform -chdir=infra init
 terraform -chdir=infra apply -auto-approve
 ```
 
-## Configure the GKE cluster & Apigee org
+## Configure the GKE & Apigee
 
 ```
+export APIGEE_ACCESS_TOKEN="$(gcloud config config-helper --force-auth-refresh | grep access_token | grep -o -E '[^ ]+$')";
+
 terraform -chdir=app init
 terraform -chdir=app apply -auto-approve
 ```

@@ -1,3 +1,7 @@
+/*****************************************
+  GCP settings
+ *****************************************/
+
 variable "project_id" {
   description = "Project id (also used for the Apigee Organization)"
   type        = string
@@ -16,6 +20,10 @@ variable "cluster_location" {
   description = "GKE cluster location"
   default     = "us-west1"
 }
+
+/*****************************************
+  Apigee settings
+ *****************************************/
 
 variable "apigee_runtime" {
   description = "Apigee runtime URL"
