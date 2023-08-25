@@ -97,29 +97,6 @@ variable "gke_max_num_nodes" {
   Apigee settings
  *****************************************/
 
-variable "apigee_product_name" {
-  description = "Name for the Apigee product"
-  type        = string
-  default     = "httpbin-product"
-}
-
-variable "apigee_app_name" {
-  description = "Name for the Apigee app"
-  type        = string
-  default     = "env"
-}
-
-variable "apigee_developer" {
-  description = "Name for the Apigee developer"
-  type        = any
-  default     = {
-    email      = "ahamilton@example.com"
-    first_name = "Alex"
-    last_name  = "Hamilton"
-    user_name  = "ahamilton@example.com"
-  }
-}
-
 variable "ax_region" {
   description = "GCP region for storing Apigee analytics data (see https://cloud.google.com/apigee/docs/api-platform/get-started/install-cli)"
   type        = string

@@ -22,6 +22,40 @@ variable "apigee_runtime" {
   type        = string
 }
 
+variable "apigee_env_name" {
+  description = "Name for the Apigee environment"
+  type        = string
+  default     = "env"
+}
+
+variable "apigee_envgroup_name" {
+  description = "Name for the Apigee environment group"
+  type        = string
+}
+
+variable "apigee_product_name" {
+  description = "Name for the Apigee product"
+  type        = string
+  default     = "httpbin-product"
+}
+
+variable "apigee_app_name" {
+  description = "Name for the Apigee app"
+  type        = string
+  default     = "env"
+}
+
+variable "apigee_developer" {
+  description = "Name for the Apigee developer"
+  type        = any
+  default     = {
+    email      = "ahamilton@example.com"
+    first_name = "Alex"
+    last_name  = "Hamilton"
+    user_name  = "ahamilton@example.com"
+  }
+}
+
 variable "apigee_remote_namespace" {
   description = "K8s namespace where to install the remote proxy agent"
   type        = string
@@ -40,16 +74,5 @@ variable "apigee_remote_key" {
 
 variable "apigee_remote_properties" {
   description = "Apigee remote proxy properties base64 encoded"
-  type        = string
-}
-
-variable "apigee_env_name" {
-  description = "Name for the Apigee environment"
-  type        = string
-  default     = "env"
-}
-
-variable "apigee_envgroup_name" {
-  description = "Name for the Apigee environment group"
   type        = string
 }
