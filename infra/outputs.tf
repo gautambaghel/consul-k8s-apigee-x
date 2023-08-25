@@ -8,9 +8,9 @@ output "region" {
   description = "Google Cloud region to deploy resources"
 }
 
-output "apigee_hostname" {
+output "apigee_runtime" {
   description = "Generated hostname (nip.io encoded IP address)"
-  value       = module.nip-development-hostname.hostname
+  value       = "https://${var.apigee_envgroup_name}.${module.nip-development-hostname.hostname}"
 }
 
 output "gke_cluster_name" {
@@ -22,5 +22,3 @@ output "gke_cluster_location" {
   value       = google_container_cluster.primary.location
   description = "GKE Cluster location"
 }
-
-

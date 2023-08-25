@@ -1,5 +1,17 @@
 # consul-k8s-apigee-x
 
+## Prerequisites
+
+The following must be installed on your local machine
+
+```
+* Terraform
+* curl
+* tar
+* yq
+
+```
+
 ## Create the GKE cluster & Apigee org
 ```
 gcloud auth login

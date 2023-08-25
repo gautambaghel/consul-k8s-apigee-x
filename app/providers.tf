@@ -13,24 +13,34 @@ terraform {
     }
 
     helm = {
-      source = "hashicorp/helm"
+      source  = "hashicorp/helm"
       version = ">= 2.0, <3.0"
+    }
+    
+    apigee = {
+      source  = "scastria/apigee"
+      version = ">= 0.1.0, < 0.2.0"
     }
   }
 }
 
-# Retrieve an access token as the Terraform runner
+provider "apigee" {
+  organization = var.project_id
+  server       = "apigee.googleapis.com"
+}
+
 data "google_client_config" "provider" {}
 
-data "google_container_cluster" "my_cluster" {
+data "google_container_cluster" "default" {
+  project  = var.project_id
   name     = var.cluster_name
   location = var.cluster_location
 }
 
 provider "kubernetes" {
-  host  = "https://${data.google_container_cluster.my_cluster.endpoint}"
+  host  = "https://${data.google_container_cluster.default.endpoint}"
   token = data.google_client_config.provider.access_token
   cluster_ca_certificate = base64decode(
-    data.google_container_cluster.my_cluster.master_auth[0].cluster_ca_certificate,
+    data.google_container_cluster.default.master_auth[0].cluster_ca_certificate,
   )
 }

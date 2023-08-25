@@ -1,10 +1,14 @@
+/*****************************************
+  Locals
+ *****************************************/
+
 locals {
   subnet_region_name = { for subnet in var.exposure_subnets :
     subnet.region => "${subnet.region}/${subnet.name}"
   }
   apigee_envgroups = {
-    "${var.envgroup}" = {
-      hostnames = ["${var.envgroup}.${module.nip-development-hostname.hostname}"]
+    "${var.apigee_envgroup_name}" = {
+      hostnames = ["${var.apigee_envgroup_name}.${module.nip-development-hostname.hostname}"]
     }
   }
   apigee_instances = {
@@ -12,16 +16,16 @@ locals {
       region       = "us-west1"
       ip_range     = "10.0.0.0/22"
       key_name     = "inst-disk"
-      environments = [var.env]
+      environments = [var.apigee_env_name]
     }
   }
   apigee_environments = {
-    "${var.env}" = {
-      display_name = var.env
+    "${var.apigee_env_name}" = {
+      display_name = var.apigee_env_name
       description  = "Environment created by apigee/terraform-modules"
       node_config  = null
       iam          = null
-      envgroups    = [var.envgroup]
+      envgroups    = [var.apigee_envgroup_name]
     }
   }
   org_kms_keyring_name = "apigee-x-org-${random_string.suffix.result}"
@@ -33,6 +37,10 @@ resource "random_string" "suffix" {
   special = false
   upper   = false
 }
+
+/*****************************************
+  GCP Project
+ *****************************************/
 
 module "project" {
   source          = "github.com/terraform-google-modules/cloud-foundation-fabric//modules/project?ref=v16.0.0"
@@ -109,89 +117,45 @@ module "nip-development-hostname" {
   source             = "github.com/apigee/terraform-modules//modules/nip-development-hostname"
   project_id         = module.project.project_id
   address_name       = "apigee-external"
-  subdomain_prefixes = [local.envgroup]
-}
-
-/*****************************************
-  IAM bindings
- *****************************************/
-
-# Create a new Service account for GKE
-resource "google_service_account" "gke" {
-  project      = module.project.project_id
-  account_id   = "sa-${local.gke_cluster_name}"
-  display_name = "GKE Service Account"
-}
-
-# Create a new Service account for Apigee
-resource "google_service_account" "apigee" {
-  project      = module.project.project_id
-  account_id   = "apigee-analytics-${local.gke_cluster_name}"
-  display_name = "Apigee Service Account"
+  subdomain_prefixes = [var.apigee_envgroup_name]
 }
 
 /*****************************************
   Install Apigee envoy adapter svc
  *****************************************/
 
-#  TODO
-
-/*****************************************
-  Configure Apigee
- *****************************************/
-
-resource "random_string" "consumer_key" {
-  length  = 12
-  special = true
-  override_special = "_-"
-}
-
-resource "random_password" "consumer_secret" {
-  length           = 16
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
-}
-
-# Create a new Apigee developer
-resource "apigee_developer" "apigee_dev" {
-  email = "ahamilton@example.com"
-  first_name = "Alex"
-  last_name = "Hamilton"
-  user_name = "ahamilton@example.com"
-}
-
-# Create a new Apigee product
-resource "apigee_product" "apigee_product" {
-  name = "httpbin-product"
-  display_name = "httpbin-product"
-  auto_approval_type = true
-  description = "An example product"
-  environments = [
-    "${var.env}"
-  ]
-  attributes = {
-    access = "public"
+resource "null_resource" "example" {
+  provisioner "local-exec" {
+    command = <<-EOT
+      curl -L https://github.com/apigee/apigee-remote-service-cli/releases/download/v${var.apigee_remote_version}/apigee-remote-service-cli_${var.apigee_remote_version}_${var.apigee_remote_os}_64-bit.tar.gz > apigee-remote-service-cli.tar.gz
+      tar -xf apigee-remote-service-cli.tar.gz
+      rm apigee-remote-service-cli.tar.gz
+      apigee-remote-service-cli provision \
+      --organization ${var.project_id} \
+      --environment ${var.apigee_env_name} \
+      --runtime "https://${var.apigee_envgroup_name}.${module.nip-development-hostname.hostname}" \
+      --namespace ${var.apigee_remote_namespace} \
+      --token $APIGEE_ACCESS_TOKEN > config.yaml
+      rm apigee-remote-service-cli
+      rm LICENSE
+      rm README.md
+      echo "apigee_remote_cert=\"$(yq e '.data."remote-service.crt" | select(. != null)' config.yaml)\"" >> ${path.module}/../app/apigee.auto.tfvars
+      echo "apigee_remote_key=\"$(yq e '.data."remote-service.key" | select(. != null)' config.yaml)\"" >> ${path.module}/../app/apigee.auto.tfvars
+      echo "apigee_remote_properties=\"$(yq e '.data."remote-service.properties" | select(. != null)' config.yaml)\"" >> ${path.module}/../app/apigee.auto.tfvars
+    EOT
   }
-  operation {
-    api_source = "httpbin.default.svc.cluster.local"
-    path       = "/"
-    methods    = ["GET","PATCH","POST","PUT","DELETE","HEAD","CONNECT","OPTIONS","TRACE"]
+
+  triggers = {
+    apigee_remote_namespace = var.apigee_remote_namespace
+    apigee_env_name         = var.apigee_env_name
+    apigee_envgroup_name    = var.apigee_envgroup_name
+    nip                     = module.nip-development-hostname.hostname
   }
-}
 
-# Create a new Apigee developer app
-resource "apigee_developer_app" "apigee_app" {
-  developer_email = apigee_developer.apigee_dev.email
-  name = "httpbin-app"
-}
-
-# Create the credentials for the developer
-resource "apigee_developer_app_credential" "apigee_app_creds" {
-  developer_email = apigee_developer.apigee_dev.email
-  developer_app_name = apigee_developer_app.apigee_app.name
-  consumer_key = random_string.consumer_key.result
-  consumer_secret = random_password.consumer_secret.result
-  api_products = [
-    apigee_product.apigee_product.name
+  depends_on = [
+    google_container_node_pool.primary_nodes,
+    module.apigee-x-core,
+    module.apigee-x-bridge-mig,
+    module.mig-l7xlb
   ]
 }

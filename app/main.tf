@@ -4,14 +4,14 @@
 
 resource "kubernetes_service_account" "curl" {
   metadata {
-    name = "curl"
+    name      = "curl"
     namespace = "default"
   }
 }
 
 resource "kubernetes_service" "curl" {
   metadata {
-    name = "curl"
+    name      = "curl"
     namespace = "default"
     labels = {
       app = "curl"
@@ -53,14 +53,14 @@ resource "kubernetes_deployment" "curl" {
       }
 
       spec {
-        service_account_name = kubernetes_service_account.curl.metadata.name
+        service_account_name = kubernetes_service_account.curl.metadata[0].name
 
         container {
-          image           = "curlimages/curl"
-          name            = "curl"
+          image             = "curlimages/curl"
+          name              = "curl"
           image_pull_policy = "IfNotPresent"
-          command         = ["sh", "-c", "--"]
-          args            = ["while true; do sleep 30; done;"]
+          command           = ["sh", "-c", "--"]
+          args              = ["while true; do sleep 30; done;"]
         }
       }
     }
@@ -73,14 +73,14 @@ resource "kubernetes_deployment" "curl" {
 
 resource "kubernetes_service_account" "httpbin" {
   metadata {
-    name = "httpbin"
+    name      = "httpbin"
     namespace = "default"
   }
 }
 
 resource "kubernetes_service" "httpbin" {
   metadata {
-    name = "httpbin"
+    name      = "httpbin"
     namespace = "default"
     labels = {
       app = "httpbin"
@@ -116,19 +116,19 @@ resource "kubernetes_deployment" "httpbin" {
     template {
       metadata {
         labels = {
-          app        = "httpbin"
-          version    = "v1"
+          app     = "httpbin"
+          version = "v1"
         }
       }
 
       spec {
-        service_account_name = kubernetes_service_account.httpbin.metadata.name
+        service_account_name = kubernetes_service_account.httpbin.metadata[0].name
 
         container {
-          image           = "docker.io/kennethreitz/httpbin"
-          name            = "httpbin"
+          image             = "docker.io/kennethreitz/httpbin"
+          name              = "httpbin"
           image_pull_policy = "IfNotPresent"
-          ports {
+          port {
             container_port = 80
           }
         }

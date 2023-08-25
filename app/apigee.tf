@@ -1,11 +1,71 @@
 /*****************************************
-  Apigee envoy adapter deployment & svc
+  Configure Apigee resources
+ *****************************************/
+
+resource "random_string" "consumer_key" {
+  length           = 48
+  special          = true
+  override_special = "_-"
+}
+
+resource "random_password" "consumer_secret" {
+  length           = 64
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
+# Create a new Apigee developer
+resource "apigee_developer" "apigee_dev" {
+  email      = var.apigee_developer.email
+  first_name = var.apigee_developer.first_name
+  last_name  = var.apigee_developer.last_name
+  user_name  = var.apigee_developer.user_name
+}
+
+# Create a new Apigee product
+resource "apigee_product" "apigee_product" {
+  name               = var.apigee_product_name
+  display_name       = var.apigee_product_name
+  auto_approval_type = true
+  description        = "A ${var.apigee_product_name} product"
+  environments = [
+    var.apigee_env_name
+  ]
+  attributes = {
+    access = "public"
+  }
+  operation {
+    api_source = "httpbin.default.svc.cluster.local"
+    path       = "/"
+    methods    = ["GET","PATCH","POST","PUT","DELETE","HEAD","CONNECT","OPTIONS","TRACE"]
+  }
+}
+
+# Create a new Apigee developer app
+resource "apigee_developer_app" "apigee_app" {
+  developer_email = apigee_developer.apigee_dev.email
+  name            = var.apigee_app_name
+}
+
+# Create the credentials for the developer
+resource "apigee_developer_app_credential" "apigee_app_creds" {
+  developer_email    = apigee_developer.apigee_dev.email
+  developer_app_name = apigee_developer_app.apigee_app.name
+  consumer_key = random_string.consumer_key.result
+  consumer_secret = random_password.consumer_secret.result
+  api_products = [
+    apigee_product.apigee_product.name
+  ]
+}
+
+/*****************************************
+  Apigee envoy adapter k8s deployment & SVC
  *****************************************/
 
 resource "kubernetes_deployment" "apigee_remote_service_envoy" {
   metadata {
     name      = "apigee-remote-service-envoy"
-    namespace = "apigee"
+    namespace = "${var.apigee_remote_namespace}"
   }
 
   spec {
@@ -20,17 +80,17 @@ resource "kubernetes_deployment" "apigee_remote_service_envoy" {
     template {
       metadata {
         annotations = {
-          "prometheus.io/path"                = "/metrics"
-          "prometheus.io/port"                = "5001"
-          "prometheus.io/scheme"              = "https"
-          "prometheus.io/scrape"              = "true"
-          "prometheus.io/type"                = "prometheusspec"
+          "prometheus.io/path"   = "/metrics"
+          "prometheus.io/port"   = "5001"
+          "prometheus.io/scheme" = "https"
+          "prometheus.io/scrape" = "true"
+          "prometheus.io/type"   = "prometheusspec"
         }
         labels = {
           app     = "apigee-remote-service-envoy"
           version = "v1"
           org     = "${var.project_id}"
-          env     = "${var.apigee_env}"
+          env     = "${var.apigee_env_name}"
         }
       }
 
@@ -38,17 +98,17 @@ resource "kubernetes_deployment" "apigee_remote_service_envoy" {
         service_account_name = "apigee-remote-service-envoy"
 
         security_context {
-          run_as_user    = 999
-          run_as_group   = 999
+          run_as_user     = 999
+          run_as_group    = 999
           run_as_non_root = true
         }
 
         container {
-          name            = "apigee-remote-service-envoy"
-          image           = "google/apigee-envoy-adapter:v2.1.1"
+          name              = "apigee-remote-service-envoy"
+          image             = "google/apigee-envoy-adapter:v2.1.1"
           image_pull_policy = "IfNotPresent"
 
-          ports {
+          port {
             container_port = 5000
           }
 
@@ -83,48 +143,45 @@ resource "kubernetes_deployment" "apigee_remote_service_envoy" {
             }
           }
 
-          volume_mounts {
+          volume_mount {
             mount_path = "/config"
             name       = "apigee-remote-service-envoy"
             read_only  = true
           }
 
-          volume_mounts {
+          volume_mount {
             mount_path = "/policy-secret"
             name       = "policy-secret"
             read_only  = true
           }
         }
-      }
-
-      volume {
-        name = "apigee-remote-service-envoy"
-
-        config_map {
+        volume {
           name = "apigee-remote-service-envoy"
+          config_map {
+            name = "apigee-remote-service-envoy"
+          }
         }
-      }
-
-      volume {
-        name = "policy-secret"
-
-        secret {
-          default_mode = 420
-          secret_name  = "${var.project_id}-${var.apigee_env}-policy-secret"
+        volume {
+          name = "policy-secret"
+          secret {
+            default_mode = "0644"
+            secret_name  = "${var.project_id}-${var.apigee_env_name}-policy-secret"
+          }
         }
       }
     }
   }
 }
 
+# Apigee remote proxy service
 resource "kubernetes_service" "apigee_remote_service_envoy" {
   metadata {
     name      = "apigee-remote-service-envoy"
-    namespace = "apigee"
+    namespace = "${var.apigee_remote_namespace}"
     labels = {
       app = "apigee-remote-service-envoy"
-      org     = "${var.project_id}"
-      env     = "${var.apigee_env}"
+      org = "${var.project_id}"
+      env = "${var.apigee_env_name}"
     }
   }
 
@@ -134,8 +191,57 @@ resource "kubernetes_service" "apigee_remote_service_envoy" {
     }
 
     port {
-      port     = 5000
-      name     = "grpc"
+      port = 5000
+      name = "grpc"
     }
   }
+}
+
+# Apigee remote proxy ConfigMap
+resource "kubernetes_service_account" "apigee_remote_service_envoy_sa" {
+  metadata {
+    name      = "apigee-remote-service-envoy"
+    namespace = "${var.apigee_remote_namespace}"
+    labels = {
+      org = "${var.project_id}"
+    }
+  }
+}
+
+# Apigee remote proxy ConfigMap
+resource "kubernetes_config_map" "apigee_remote_service_envoy_config" {
+  metadata {
+    name      = "apigee-remote-service-envoy"
+    namespace = "${var.apigee_remote_namespace}"
+  }
+
+  data = {
+    "config.yaml" = <<-EOT
+      tenant:
+        remote_service_api: ${var.apigee_runtime}/remote-service
+        org_name: ${var.project_id}
+        env_name: ${var.apigee_env_name}
+      analytics:
+        collection_interval: 10s
+      auth:
+        jwt_provider_key: ${var.apigee_runtime}/remote-token/token
+        append_metadata_headers: true
+    EOT
+  }
+}
+
+# Apigee remote proxy Secret
+resource "kubernetes_secret" "example" {
+  metadata {
+    name      = "${var.project_id}-${var.apigee_env_name}-policy-secret"
+    namespace = "${var.apigee_remote_namespace}"
+  }
+
+  data = {
+    "remote-service.crt"        = base64decode(var.apigee_remote_cert)
+    "remote-service.key"        = base64decode(var.apigee_remote_key)
+    "remote-service.properties" = base64decode(var.apigee_remote_properties)
+  }
+
+  type = "opaque"
 }
