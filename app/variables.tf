@@ -60,7 +60,7 @@ variable "apigee_developer" {
     email      = "ahamilton@example.com"
     first_name = "Alex"
     last_name  = "Hamilton"
-    user_name  = "ahamilton@example.com"
+    user_name  = "ahamilton"
   }
 }
 
