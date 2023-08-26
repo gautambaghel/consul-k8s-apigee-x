@@ -10,13 +10,11 @@ Following instructions are taken from the [terraform module here](https://github
 
 The following must be installed on your local machine, these commands might run in [local-exec](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource)
 
-```
-* terraform
-* gcloud
-* curl
-* tar
-* yq
-```
+- terraform
+- gcloud
+- curl
+- tar
+- yq
 
 ### Select a GCP project
 
