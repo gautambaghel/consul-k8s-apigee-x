@@ -1,5 +1,7 @@
 # consul-k8s-apigee-x
 
+![ext_authz](images/arch.png)
+
 ## Apigee X used for ext_authz with Consul Service Mesh
 
 Following instructions are taken from the [terraform module here](https://github.com/apigee/terraform-modules), please refer to this repo for issues and further assistance.
