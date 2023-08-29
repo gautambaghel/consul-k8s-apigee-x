@@ -221,8 +221,6 @@ resource "kubernetes_config_map" "apigee_remote_service_envoy_config" {
         remote_service_api: ${var.apigee_runtime}/remote-service
         org_name: ${var.project_id}
         env_name: ${var.apigee_env_name}
-      analytics:
-        collection_interval: 10s
       auth:
         jwt_provider_key: ${var.apigee_runtime}/remote-token/token
         append_metadata_headers: true

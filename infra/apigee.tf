@@ -12,7 +12,7 @@ locals {
     }
   }
   apigee_instances = {
-    "usw1-instance-${random_string.suffix.result}" = {
+    usw1-instance = {
       region       = "us-west1"
       ip_range     = "10.0.0.0/22"
       key_name     = "inst-disk"
@@ -124,12 +124,13 @@ module "nip-development-hostname" {
   Install Apigee envoy adapter svc
  *****************************************/
 
-resource "null_resource" "example" {
+resource "null_resource" "apigee_remote_setup" {
   provisioner "local-exec" {
     command = <<-EOT
       curl -L https://github.com/apigee/apigee-remote-service-cli/releases/download/v${var.apigee_remote_version}/apigee-remote-service-cli_${var.apigee_remote_version}_${var.apigee_remote_os}_64-bit.tar.gz > apigee-remote-service-cli.tar.gz
       tar -xf apigee-remote-service-cli.tar.gz
       rm apigee-remote-service-cli.tar.gz
+      export APIGEE_ACCESS_TOKEN="$(gcloud config config-helper --force-auth-refresh | grep access_token | grep -o -E '[^ ]+$')";
       apigee-remote-service-cli provision \
       --organization ${var.project_id} \
       --environment ${var.apigee_env_name} \
@@ -139,6 +140,7 @@ resource "null_resource" "example" {
       rm apigee-remote-service-cli
       rm LICENSE
       rm README.md
+      rm -f ${path.module}/../app/apigee.auto.tfvars
       echo "apigee_remote_cert=\"$(yq e '.data."remote-service.crt" | select(. != null)' config.yaml)\"" >> ${path.module}/../app/apigee.auto.tfvars
       echo "apigee_remote_key=\"$(yq e '.data."remote-service.key" | select(. != null)' config.yaml)\"" >> ${path.module}/../app/apigee.auto.tfvars
       echo "apigee_remote_properties=\"$(yq e '.data."remote-service.properties" | select(. != null)' config.yaml)\"" >> ${path.module}/../app/apigee.auto.tfvars
