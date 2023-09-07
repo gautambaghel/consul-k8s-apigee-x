@@ -132,15 +132,7 @@ data "external" "apigee_remote_setup" {
     apigee_runtime = "https://${var.apigee_envgroup_name}.${module.nip-development-hostname.hostname}"
     apigee_env_name = var.apigee_env_name
     apigee_namespace = var.apigee_remote_namespace
-    apigee_remote_os = var.apigee_remote_os
     apigee_remote_version = var.apigee_remote_version
-  }
-
-  triggers = {
-    apigee_remote_namespace = var.apigee_remote_namespace
-    apigee_env_name         = var.apigee_env_name
-    apigee_envgroup_name    = var.apigee_envgroup_name
-    nip                     = module.nip-development-hostname.hostname
   }
 
   depends_on = [

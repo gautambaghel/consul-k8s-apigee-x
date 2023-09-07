@@ -121,12 +121,6 @@ variable "apigee_remote_namespace" {
   default     = "apigee"
 }
 
-variable "apigee_remote_os" {
-  description = "The operating system where the shell commands will run to install remote proxy agent"
-  type        = string
-  default     = "macOS"
-}
-
 variable "apigee_remote_version" {
   description = "Version of the remote proxy agent (see https://github.com/apigee/apigee-remote-service-envoy/tree/main)"
   type        = string

@@ -26,6 +26,7 @@ export TF_VAR_project_id=xxx
 gcloud config set project $PROJECT_ID
 gcloud auth login
 ```
+> :warning: **If you're running Terraform locally on a Macbook make sure the apigee_remote_os var is set to macOS**
 
 ## Create the GKE & Apigee
 ```
