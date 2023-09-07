@@ -229,7 +229,7 @@ resource "kubernetes_config_map" "apigee_remote_service_envoy_config" {
 }
 
 # Apigee remote proxy Secret
-resource "kubernetes_secret" "example" {
+resource "kubernetes_secret" "apigee_remote_service_envoy_secret" {
   metadata {
     name      = "${var.project_id}-${var.apigee_env_name}-policy-secret"
     namespace = "${var.apigee_remote_namespace}"

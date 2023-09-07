@@ -29,6 +29,8 @@ gcloud auth login
 
 ## Create the GKE & Apigee
 ```
+export APIGEE_ACCESS_TOKEN="$(gcloud auth print-access-token)";
+
 terraform -chdir=infra init
 terraform -chdir=infra apply -auto-approve
 ```
@@ -36,7 +38,7 @@ terraform -chdir=infra apply -auto-approve
 ## Configure the GKE & Apigee
 
 ```
-export APIGEE_ACCESS_TOKEN="$(gcloud config config-helper --force-auth-refresh | grep access_token | grep -o -E '[^ ]+$')";
+export APIGEE_ACCESS_TOKEN="$(gcloud auth print-access-token)";
 
 terraform -chdir=app init
 terraform -chdir=app apply -auto-approve

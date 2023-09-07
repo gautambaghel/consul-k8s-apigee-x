@@ -90,5 +90,9 @@ project_id="${var.project_id}"
 apigee_env_name="${var.apigee_env_name}"
 apigee_envgroup_name="${var.apigee_envgroup_name}"
 apigee_runtime="https://${var.apigee_envgroup_name}.${module.nip-development-hostname.hostname}"
+apigee_remote_namespace="${var.apigee_remote_namespace}"
+apigee_remote_cert="${data.external.apigee_remote_setup.result["apigee_remote_cert"]}"
+apigee_remote_key="${data.external.apigee_remote_setup.result["apigee_remote_key"]}"
+apigee_remote_properties="${data.external.apigee_remote_setup.result["apigee_remote_properties"]}"
 EOT
 }
