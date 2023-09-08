@@ -41,9 +41,9 @@ rm apigee-remote-service-cli
 rm LICENSE
 rm README.md
 
-apigee_remote_cert=$(yq e '.data."remote-service.crt" | select(. != null)' config.yaml)
-apigee_remote_key=$(yq e '.data."remote-service.key" | select(. != null)' config.yaml)
-apigee_remote_properties=$(yq e '.data."remote-service.properties" | select(. != null)' config.yaml)
+apigee_remote_cert=$(grep -o 'remote-service.crt: .*' config.yaml | awk '{ print $2}')
+apigee_remote_key=$(grep -o 'remote-service.key: .*' config.yaml | awk '{ print $2}')
+apigee_remote_properties=$(grep -o 'remote-service.properties: .*' config.yaml | awk '{ print $2}')
 
 # Safely produce a JSON object containing the result value.
 # jq will ensure that the value is properly quoted
