@@ -8,13 +8,14 @@ Following instructions are taken from the [terraform module here](https://github
 
 ## Prerequisites
 
-The following must be installed on your local machine, these commands might run in [local-exec](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource)
+The following must be installed on your local machine, these commands might be required for [local-exec](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource)
 
 - terraform
 - gcloud
 - curl
 - tar
 - yq
+- jq
 
 ### Select a GCP project
 
