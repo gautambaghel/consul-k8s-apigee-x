@@ -31,6 +31,7 @@ eval "$(jq -r '@sh "GCP_PROJECT_ID=\(.project_id) APIGEE_RUNTIME=\(.apigee_runti
 curl -L https://github.com/apigee/apigee-remote-service-cli/releases/download/v${APIGEE_REMOTE_VERSION}/apigee-remote-service-cli_${APIGEE_REMOTE_VERSION}_${APIGEE_REMOTE_OS}_64-bit.tar.gz > apigee-remote-service-cli.tar.gz
 tar -xf apigee-remote-service-cli.tar.gz
 rm apigee-remote-service-cli.tar.gz
+ls -als
 apigee-remote-service-cli provision \
 --organization ${GCP_PROJECT_ID} \
 --environment ${APIGEE_ENV} \

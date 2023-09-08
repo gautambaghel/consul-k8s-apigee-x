@@ -126,7 +126,7 @@ module "nip-development-hostname" {
 
 # Needs APIGEE_ACCESS_TOKEN to be set during runtime
 data "external" "apigee_remote_setup" {
-  program = ["bash", "scripts/apigee-remote-service-cli.sh"]
+  program = ["bash", "${path.module}/scripts/apigee-remote-service-cli.sh"]
   query = {
     project_id = var.project_id
     apigee_runtime = "https://${var.apigee_envgroup_name}.${module.nip-development-hostname.hostname}"
