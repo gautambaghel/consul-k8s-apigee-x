@@ -147,5 +147,5 @@ variable "service_b_port" {
 variable "service_b_cmd" {
   description = "An array of commands to execute for service B"
   type        = list(string)
-  default     = ["/bin/sh -c 'sleep infinity'"]
+  default     = ["/bin/sleep", "infinity"]
 }
