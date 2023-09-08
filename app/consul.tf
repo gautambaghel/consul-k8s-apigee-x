@@ -14,12 +14,12 @@ resource "kubernetes_manifest" "service_defaults" {
 }
 
 # Configure consul service intentions from Service B -> Service A
-resource "kubernetes_manifest" "service_b_to_service_a" {
+resource "kubernetes_manifest" "serviceB_to_serviceA" {
   manifest = {
     "apiVersion" = "consul.hashicorp.com/v1alpha1"
     "kind"       = "ServiceIntentions"
     "metadata" = {
-      "name"      = "service_b_to_service_a"
+      "name"      = var.service_b_name
       "namespace" = var.service_b_namespace
     }
     "spec" = {
@@ -37,12 +37,12 @@ resource "kubernetes_manifest" "service_b_to_service_a" {
 }
 
 # Configure consul service intentions from Service A -> Apigee Remote proxy
-resource "kubernetes_manifest" "service_a_to_remote_proxy" {
+resource "kubernetes_manifest" "serviceA_to_proxy" {
   manifest = {
     "apiVersion" = "consul.hashicorp.com/v1alpha1"
     "kind"       = "ServiceIntentions"
     "metadata" = {
-      "name"      = "service_a_to_remote_proxy"
+      "name"      = var.service_a_name
       "namespace" = var.service_a_namespace
     }
     "spec" = {
