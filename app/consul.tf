@@ -5,7 +5,7 @@ resource "kubernetes_manifest" "service_defaults" {
     "kind"       = "ServiceDefaults"
     "metadata" = {
       "name"      = "apigee-remote-service-envoy"
-      "namespace" = "default"
+      "namespace" = var.apigee_remote_namespace
     }
     "spec" = {
       "protocol" = "grpc"
@@ -13,22 +13,22 @@ resource "kubernetes_manifest" "service_defaults" {
   }
 }
 
-# Configure consul service intentions from curl -> httpbin
-resource "kubernetes_manifest" "curl_service_intentions" {
+# Configure consul service intentions from Service B -> Service A
+resource "kubernetes_manifest" "service_b_to_service_a" {
   manifest = {
     "apiVersion" = "consul.hashicorp.com/v1alpha1"
     "kind"       = "ServiceIntentions"
     "metadata" = {
-      "name"      = "curl-to-httpbin"
-      "namespace" = "default"
+      "name"      = "service_b_to_service_a"
+      "namespace" = var.service_b_namespace
     }
     "spec" = {
       "destination" = {
-        "name" = "httpbin"
+        "name" = var.service_a_name
       }
       "sources" = [
         {
-          "name"   = "curl"
+          "name"   = var.service_b_name
           "action" = "allow"
         }
       ]
@@ -36,14 +36,14 @@ resource "kubernetes_manifest" "curl_service_intentions" {
   }
 }
 
-# Configure consul service intentions from httpbin -> proxy
-resource "kubernetes_manifest" "httpbin_service_intentions" {
+# Configure consul service intentions from Service A -> Apigee Remote proxy
+resource "kubernetes_manifest" "service_a_to_remote_proxy" {
   manifest = {
     "apiVersion" = "consul.hashicorp.com/v1alpha1"
     "kind"       = "ServiceIntentions"
     "metadata" = {
-      "name"      = "httpbin-to-proxy"
-      "namespace" = "default"
+      "name"      = "service_a_to_remote_proxy"
+      "namespace" = var.service_a_namespace
     }
     "spec" = {
       "destination" = {
@@ -51,7 +51,7 @@ resource "kubernetes_manifest" "httpbin_service_intentions" {
       }
       "sources" = [
         {
-          "name"   = "httpbin"
+          "name"   = var.service_a_name
           "action" = "allow"
         }
       ]
@@ -60,13 +60,13 @@ resource "kubernetes_manifest" "httpbin_service_intentions" {
 }
 
 # Configure external authorization
-resource "kubernetes_manifest" "httpbin_service_defaults" {
+resource "kubernetes_manifest" "service_a_service_defaults" {
   manifest = {
     "apiVersion" = "consul.hashicorp.com/v1alpha1"
     "kind"       = "ServiceDefaults"
     "metadata" = {
-      "name"      = "httpbin"
-      "namespace" = "default"
+      "name"      = var.service_a_name
+      "namespace" = var.service_a_namespace
     }
     "spec" = {
       "protocol" = "http"

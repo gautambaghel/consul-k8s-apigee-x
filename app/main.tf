@@ -4,34 +4,34 @@
 
 resource "kubernetes_service_account" "curl" {
   metadata {
-    name      = "curl"
-    namespace = "default"
+    name      = var.service_b_name
+    namespace = var.service_b_namespace
   }
 }
 
 resource "kubernetes_service" "curl" {
   metadata {
-    name      = "curl"
-    namespace = "default"
+    name      = var.service_b_name
+    namespace = var.service_b_namespace
     labels = {
-      app = "curl"
+      app = var.service_b_name
     }
   }
   spec {
     selector = {
-      app = "curl"
+      app = var.service_b_name
     }
     port {
-      port        = 80
-      target_port = 80
+      port        = var.service_b_port
+      target_port = var.service_b_port
     }
   }
 }
 
 resource "kubernetes_deployment" "curl" {
   metadata {
-    name      = "curl"
-    namespace = "default"
+    name      = var.service_b_name
+    namespace = var.service_b_namespace
   }
 
   spec {
@@ -39,7 +39,7 @@ resource "kubernetes_deployment" "curl" {
 
     selector {
       match_labels = {
-        app     = "curl"
+        app     = var.service_b_name
         version = "v1"
       }
     }
@@ -47,7 +47,7 @@ resource "kubernetes_deployment" "curl" {
     template {
       metadata {
         labels = {
-          app     = "curl"
+          app     = var.service_b_name
           version = "v1"
         }
       }
@@ -56,11 +56,12 @@ resource "kubernetes_deployment" "curl" {
         service_account_name = kubernetes_service_account.curl.metadata[0].name
 
         container {
-          image             = "curlimages/curl"
-          name              = "curl"
-          image_pull_policy = "IfNotPresent"
-          command           = ["sh", "-c", "--"]
-          args              = ["while true; do sleep 30; done;"]
+          image   = var.service_b_image
+          name    = var.service_b_name
+          command = var.service_b_cmd
+          port {
+            container_port = var.service_b_port
+          }
         }
       }
     }
@@ -68,39 +69,39 @@ resource "kubernetes_deployment" "curl" {
 }
 
 /*****************************************
-  httpbin app
+  Service A
  *****************************************/
 
-resource "kubernetes_service_account" "httpbin" {
+resource "kubernetes_service_account" "service_a" {
   metadata {
-    name      = "httpbin"
-    namespace = "default"
+    name      = var.service_a_name
+    namespace = var.service_a_namespace
   }
 }
 
-resource "kubernetes_service" "httpbin" {
+resource "kubernetes_service" "service_a" {
   metadata {
-    name      = "httpbin"
-    namespace = "default"
+    name      = var.service_a_name
+    namespace = var.service_a_namespace
     labels = {
-      app = "httpbin"
+      app = var.service_a_name
     }
   }
   spec {
     selector = {
-      app = "httpbin"
+      app = var.service_a_name
     }
     port {
-      port        = 80
-      target_port = 80
+      port        = var.service_a_port
+      target_port = var.service_a_port
     }
   }
 }
 
-resource "kubernetes_deployment" "httpbin" {
+resource "kubernetes_deployment" "service_a" {
   metadata {
-    name      = "httpbin"
-    namespace = "default"
+    name      = var.service_a_name
+    namespace = var.service_a_namespace
   }
 
   spec {
@@ -108,7 +109,7 @@ resource "kubernetes_deployment" "httpbin" {
 
     selector {
       match_labels = {
-        app     = "httpbin"
+        app     = var.service_a_name
         version = "v1"
       }
     }
@@ -116,20 +117,20 @@ resource "kubernetes_deployment" "httpbin" {
     template {
       metadata {
         labels = {
-          app     = "httpbin"
+          app     = var.service_a_name
           version = "v1"
         }
       }
 
       spec {
-        service_account_name = kubernetes_service_account.httpbin.metadata[0].name
+        service_account_name = kubernetes_service_account.service_a.metadata[0].name
 
         container {
-          image             = "docker.io/kennethreitz/httpbin"
-          name              = "httpbin"
-          image_pull_policy = "IfNotPresent"
+          image   = var.service_a_image
+          name    = var.service_a_name
+          command = var.service_a_cmd
           port {
-            container_port = 80
+            container_port = var.service_a_port
           }
         }
       }

@@ -35,9 +35,9 @@ resource "apigee_product" "apigee_product" {
     access = "public"
   }
   operation {
-    api_source = "httpbin.default.svc.cluster.local"
+    api_source = "${var.service_a_name}.default.svc.cluster.local"
     path       = "/"
-    methods    = ["GET","PATCH","POST","PUT","DELETE","HEAD","CONNECT","OPTIONS","TRACE"]
+    methods    = ["GET", "PATCH", "POST", "PUT", "DELETE", "HEAD", "CONNECT", "OPTIONS", "TRACE"]
   }
 }
 
@@ -51,8 +51,8 @@ resource "apigee_developer_app" "apigee_app" {
 resource "apigee_developer_app_credential" "apigee_app_creds" {
   developer_email    = apigee_developer.apigee_dev.email
   developer_app_name = apigee_developer_app.apigee_app.name
-  consumer_key = random_string.consumer_key.result
-  consumer_secret = random_password.consumer_secret.result
+  consumer_key       = random_string.consumer_key.result
+  consumer_secret    = random_password.consumer_secret.result
   api_products = [
     apigee_product.apigee_product.name
   ]
@@ -62,10 +62,17 @@ resource "apigee_developer_app_credential" "apigee_app_creds" {
   Apigee envoy adapter k8s deployment & SVC
  *****************************************/
 
+resource "kubernetes_namespace" "apigee_remote_service_namespace" {
+  count = var.apigee_remote_namespace == "default" ? 0 : 1
+  metadata {
+    name = var.apigee_remote_namespace
+  }
+}
+
 resource "kubernetes_deployment" "apigee_remote_service_envoy" {
   metadata {
     name      = "apigee-remote-service-envoy"
-    namespace = "${var.apigee_remote_namespace}"
+    namespace = var.apigee_remote_namespace
   }
 
   spec {
@@ -177,7 +184,7 @@ resource "kubernetes_deployment" "apigee_remote_service_envoy" {
 resource "kubernetes_service" "apigee_remote_service_envoy" {
   metadata {
     name      = "apigee-remote-service-envoy"
-    namespace = "${var.apigee_remote_namespace}"
+    namespace = var.apigee_remote_namespace
     labels = {
       app = "apigee-remote-service-envoy"
       org = "${var.project_id}"
@@ -201,7 +208,7 @@ resource "kubernetes_service" "apigee_remote_service_envoy" {
 resource "kubernetes_service_account" "apigee_remote_service_envoy_sa" {
   metadata {
     name      = "apigee-remote-service-envoy"
-    namespace = "${var.apigee_remote_namespace}"
+    namespace = var.apigee_remote_namespace
     labels = {
       org = "${var.project_id}"
     }
@@ -209,10 +216,11 @@ resource "kubernetes_service_account" "apigee_remote_service_envoy_sa" {
 }
 
 # Apigee remote proxy ConfigMap
+# For more options, refer: https://cloud.google.com/apigee/docs/api-platform/envoy-adapter/v2.0.x/reference#configuration-file
 resource "kubernetes_config_map" "apigee_remote_service_envoy_config" {
   metadata {
     name      = "apigee-remote-service-envoy"
-    namespace = "${var.apigee_remote_namespace}"
+    namespace = var.apigee_remote_namespace
   }
 
   data = {
@@ -232,7 +240,7 @@ resource "kubernetes_config_map" "apigee_remote_service_envoy_config" {
 resource "kubernetes_secret" "apigee_remote_service_envoy_secret" {
   metadata {
     name      = "${var.project_id}-${var.apigee_env_name}-policy-secret"
-    namespace = "${var.apigee_remote_namespace}"
+    namespace = var.apigee_remote_namespace
   }
 
   data = {
