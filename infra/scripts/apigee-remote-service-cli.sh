@@ -12,10 +12,8 @@ fi
 OS_NAME=$(uname -s)
 
 if [[ "$OS_NAME" == "Linux" ]]; then
-    echo "- 🐧 Using Linux binaries"
     export APIGEE_REMOTE_OS='linux'
 elif [[ "$OS_NAME" == "Darwin" ]]; then
-    echo "- 🍏 Using macOS binaries"
     export APIGEE_REMOTE_OS='macOS'
     if ! [ -x "$(command -v timeout)" ]; then
     echo "Please install the timeout command for macOS. E.g. 'brew install coreutils'" >&2

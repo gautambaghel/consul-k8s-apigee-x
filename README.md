@@ -14,7 +14,6 @@ The following must be installed on your local machine, these commands might be r
 - gcloud
 - curl
 - tar
-- yq
 - jq
 
 ### Select a GCP project
