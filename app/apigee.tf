@@ -4,14 +4,12 @@
 
 resource "random_string" "consumer_key" {
   length           = 48
-  special          = true
-  override_special = "_-"
+  special          = false
 }
 
 resource "random_password" "consumer_secret" {
   length           = 64
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
+  special          = false
 }
 
 # Create a new Apigee developer
