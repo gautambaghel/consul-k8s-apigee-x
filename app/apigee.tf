@@ -37,6 +37,7 @@ resource "apigee_product" "apigee_product" {
     path       = "/"
     methods    = ["GET", "PATCH", "POST", "PUT", "DELETE", "HEAD", "CONNECT", "OPTIONS", "TRACE"]
   }
+  operation_config_type = "remoteservice"
 }
 
 # Create a new Apigee developer app
