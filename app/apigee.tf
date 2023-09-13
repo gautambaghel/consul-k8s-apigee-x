@@ -3,7 +3,7 @@
  *****************************************/
 
 resource "google_service_account" "apigee_service_account" {
-  project  = var.project_id
+  project      = var.project_id
   account_id   = "apigee-service-account"
   display_name = "Apigee Service Account (created by Terraform)"
 }
@@ -26,8 +26,8 @@ resource "local_file" "sa_key_json" {
 }
 
 data "external" "apigee_remote_setup" {
-  depends_on = [ local_file.sa_key_json ]
-  program = ["bash", "${path.module}/scripts/apigee-remote-service-cli.sh"]
+  depends_on = [local_file.sa_key_json]
+  program    = ["bash", "${path.module}/scripts/apigee-remote-service-cli.sh"]
   query = {
     project_id            = var.project_id
     apigee_runtime        = var.apigee_runtime
@@ -201,6 +201,12 @@ resource "kubernetes_deployment" "apigee_remote_service_envoy" {
             name       = "policy-secret"
             read_only  = true
           }
+
+          volume_mount {
+            mount_path = "/analytics-secret"
+            name       = "analytics-secret"
+            read_only  = true
+          }
         }
         volume {
           name = "apigee-remote-service-envoy"
@@ -213,6 +219,13 @@ resource "kubernetes_deployment" "apigee_remote_service_envoy" {
           secret {
             default_mode = "0644"
             secret_name  = "${var.project_id}-${var.apigee_env_name}-policy-secret"
+          }
+        }
+        volume {
+          name = "analytics-secret"
+          secret {
+            default_mode = "0644"
+            secret_name  = "${var.project_id}-${var.apigee_env_name}-analytics-secret"
           }
         }
       }
@@ -269,6 +282,8 @@ resource "kubernetes_config_map" "apigee_remote_service_envoy_config" {
         remote_service_api: ${var.apigee_runtime}/remote-service
         org_name: ${var.project_id}
         env_name: ${var.apigee_env_name}
+      analytics:
+        collection_interval: 10s
       auth:
         jwt_provider_key: ${var.apigee_runtime}/remote-token/token
         append_metadata_headers: true
@@ -276,8 +291,8 @@ resource "kubernetes_config_map" "apigee_remote_service_envoy_config" {
   }
 }
 
-# Apigee remote proxy Secret
-resource "kubernetes_secret" "apigee_remote_service_envoy_secret" {
+# Apigee remote proxy policy secret
+resource "kubernetes_secret" "apigee_remote_service_envoy_policy_secret" {
   metadata {
     name      = "${var.project_id}-${var.apigee_env_name}-policy-secret"
     namespace = var.apigee_remote_namespace
@@ -287,6 +302,20 @@ resource "kubernetes_secret" "apigee_remote_service_envoy_secret" {
     "remote-service.crt"        = base64decode(data.external.apigee_remote_setup.result["apigee_remote_cert"])
     "remote-service.key"        = base64decode(data.external.apigee_remote_setup.result["apigee_remote_key"])
     "remote-service.properties" = base64decode(data.external.apigee_remote_setup.result["apigee_remote_properties"])
+  }
+
+  type = "opaque"
+}
+
+# Apigee remote proxy analytics secret
+resource "kubernetes_secret" "apigee_remote_service_envoy_analytics_secret" {
+  metadata {
+    name      = "${var.project_id}-${var.apigee_env_name}-analytics-secret"
+    namespace = var.apigee_remote_namespace
+  }
+
+  data = {
+    "client_secret.json" = base64decode(data.external.apigee_remote_setup.result["client_secret"])
   }
 
   type = "opaque"

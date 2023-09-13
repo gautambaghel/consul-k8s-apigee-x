@@ -1,10 +1,8 @@
-# consul-k8s-apigee-x
+# Apigee ext_authz integration with Consul Service Mesh
 
 ![ext_authz](images/arch.png)
 
-## Apigee X used for ext_authz with Consul Service Mesh
-
-Following instructions are taken from the [terraform module here](https://github.com/apigee/terraform-modules), please refer to this repo for issues and further assistance.
+Apigee modules are taken from the Apigee [terraform-modules repo](https://github.com/apigee/terraform-modules), for issues and further assistance please open an issue there.
 
 ## Prerequisites
 
@@ -25,7 +23,9 @@ export TF_VAR_project_id=xxx
 gcloud config set project $TF_VAR_project_id
 gcloud auth login
 ```
+
 > :warning: **This might take ~30 mins to spin up**
+
 ## Create the GKE cluster & Apigee infrastructure
 
 ```
@@ -34,24 +34,59 @@ terraform -chdir=infra apply -auto-approve
 ```
 
 ## Configure the GKE cluster & Apigee resources
+
 ```
-export APIGEE_ACCESS_TOKEN="$(gcloud auth print-access-token)";
+export APIGEE_ACCESS_TOKEN="$(gcloud auth print-access-token)"; #Required for the Apigee provider & a custom script
 
 terraform -chdir=app init
 terraform -chdir=app apply -auto-approve
 ```
 
-## Retrieve the GKE & Apigee credentials locally
+## Test the setup
+
+* Retrieve GKE creds for local kubectl commands 
 
 ```
 gcloud container clusters get-credentials \
 	$(terraform -chdir=infra output -raw gke_cluster_name) \
     --region $(terraform -chdir=infra output -raw region)
-
-export APIGEE_DEV_API_KEY="$(terraform -chdir=app output apigee_developer_key)"
 ```
 
-* Ping the httpbin service from curl service again
+* Ping the httpbin service from curl service
+
+```sh
+kubectl exec -it deployment/curl -- /bin/sh
+curl -i httpbin.default.svc.cluster.local/headers
+```
+
+* The response should be HTTP/1.1 200 OK
+
+```sh
+HTTP/1.1 200 OK
+Server: gunicorn/19.9.0
+Date: Wed, 13 Sep 2023 05:32:24 GMT
+Connection: keep-alive
+Content-Type: application/json
+Content-Length: 126
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Credentials: true
+{
+  "headers": {
+    "Accept": "*/*", 
+    "Host": "httpbin.default.svc.cluster.local", 
+    "User-Agent": "curl/8.2.1"
+  }
+}
+```
+
+* Apply the `ext_authz` filter
+
+```sh
+export TF_VAR_ext_authz=true
+terraform -chdir=app apply -auto-approve
+```
+
+* Ping the httpbin service from curl service
 
 ```sh
 kubectl exec -it deployment/curl -- /bin/sh
@@ -68,12 +103,16 @@ content-length: 0
 x-envoy-upstream-service-time: 3
 ```
 
-> **_NOTE:_** The newly created Apigee products might take ~5mins to get registered. You might have to ping a few times here.
+> :warning: **It might take ~2mins for Apigee products get registered. Try pinging a few times here.**
+
+* Ping the httpbin service from curl service with the Apigee API key (env var API_KEY is added to the container automatically)
 
 ```sh
 kubectl exec -it deployment/curl -- /bin/sh
-curl -i httpbin.default.svc.cluster.local/headers -H "x-api-key: ${APIGEE_DEV_API_KEY}"
+curl -i httpbin.default.svc.cluster.local/headers -H "x-api-key: ${API_KEY}"
 ```
+
+* The response should be HTTP/1.1 200 OK with custom API headers supplimented by Apigee
 
 ```sh
 HTTP/1.1 200 OK
@@ -105,6 +144,24 @@ x-envoy-upstream-service-time: 22
     }
 }
 ```
+
+### Common errors/debugging tips
+
+- General errors
+  - ```Error: Status 401: Message: Unauthorized: "message": "Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential.```
+    - gcloud auth login
+    - Make sure the `APIGEE_ACCESS_TOKEN` is set as environment variable using export APIGEE_ACCESS_TOKEN="$(gcloud auth print-access-token)";
+
+- Consul debugging tips
+  - kubectl get servicedefaults -A
+  - kubectl get serviceintentions -A
+  - Port forward the envoy proxy on the service_a deployment, for ex.
+    - kubectl port-forward deployment/httpbin 19000
+    - visit localhost:19000 > config_dump > search for ext_authz
+
+- Apigee debugging tips
+  - Monitor the logs of `apigee-remote-service-envoy` pod for error messages
+  - Delete the pod > If the Apigee product list shows up as 0 then manually create the product/app/dev with [instructions here](https://cloud.google.com/apigee/docs/api-platform/envoy-adapter/v2.0.x/operation) and ping the httpbin service with the new API key
 
 ### Clean up
 

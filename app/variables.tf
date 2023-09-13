@@ -23,6 +23,16 @@ variable "gke_cluster_location" {
 }
 
 /*****************************************
+  Consul settings
+ *****************************************/
+
+variable "ext_authz" {
+  description = "Enable external authorization for Consul to Apigee"
+  type        = bool
+  default     = false
+}
+
+/*****************************************
   Apigee settings
  *****************************************/
 
@@ -131,6 +141,15 @@ variable "service_a_cmd" {
   default     = null
 }
 
+variable "service_a_env" {
+  description = "List of environment variables for the service A"
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default = null
+}
+
 variable "service_b_name" {
   description = "Service B, which is trying to communicate with service B"
   type        = string
@@ -159,4 +178,25 @@ variable "service_b_cmd" {
   description = "An array of commands to execute for service B"
   type        = list(string)
   default     = ["/bin/sleep", "infinity"]
+}
+
+variable "service_b_annotations" {
+  description = "List of annotations for the service B"
+  type        = map(string)
+  default     = null
+}
+
+variable "service_b_env" {
+  description = "List of environment variables for the service B"
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default = null
+}
+
+variable "service_b_api_env" {
+  description = "Name of the environment variable to store Apigee developer API key for the service B"
+  type        = string
+  default     = "API_KEY"
 }
