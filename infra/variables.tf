@@ -115,18 +115,6 @@ variable "apigee_envgroup_name" {
   default     = "envgroup"
 }
 
-variable "apigee_remote_namespace" {
-  description = "K8s namespace where to install the remote proxy agent"
-  type        = string
-  default     = "apigee"
-}
-
-variable "apigee_remote_version" {
-  description = "Version of the remote proxy agent (see https://github.com/apigee/apigee-remote-service-envoy/tree/main)"
-  type        = string
-  default     = "2.1.1"
-}
-
 variable "apigee_envgroups" {
   description = "Apigee Environment Groups"
   type = map(object({

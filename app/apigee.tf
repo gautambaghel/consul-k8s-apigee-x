@@ -1,15 +1,55 @@
 /*****************************************
+  Install Apigee envoy adapter svc
+ *****************************************/
+
+resource "google_service_account" "apigee_service_account" {
+  project  = var.project_id
+  account_id   = "apigee-service-account"
+  display_name = "Apigee Service Account (created by Terraform)"
+}
+
+resource "google_project_iam_member" "apigee_member" {
+  project  = var.project_id
+  for_each = toset(var.apigee_sa_roles_list)
+  role     = each.value
+  member   = "serviceAccount:${google_service_account.apigee_service_account.email}"
+}
+
+resource "google_service_account_key" "apigee_service_account_key" {
+  service_account_id = google_service_account.apigee_service_account.name
+  public_key_type    = "TYPE_X509_PEM_FILE"
+}
+
+resource "local_file" "sa_key_json" {
+  filename = "${path.module}/scripts/${var.apigee_sa_filename}"
+  content  = base64decode(google_service_account_key.apigee_service_account_key.private_key)
+}
+
+data "external" "apigee_remote_setup" {
+  depends_on = [ local_file.sa_key_json ]
+  program = ["bash", "${path.module}/scripts/apigee-remote-service-cli.sh"]
+  query = {
+    project_id            = var.project_id
+    apigee_runtime        = var.apigee_runtime
+    apigee_env_name       = var.apigee_env_name
+    apigee_namespace      = var.apigee_remote_namespace
+    apigee_remote_version = var.apigee_remote_version
+    apigee_analytics_sa   = "${path.module}/scripts/${var.apigee_sa_filename}"
+  }
+}
+
+/*****************************************
   Configure Apigee resources
  *****************************************/
 
 resource "random_string" "consumer_key" {
-  length           = 48
-  special          = false
+  length  = 48
+  special = false
 }
 
 resource "random_password" "consumer_secret" {
-  length           = 64
-  special          = false
+  length  = 64
+  special = false
 }
 
 # Create a new Apigee developer
@@ -69,6 +109,7 @@ resource "kubernetes_namespace" "apigee_remote_service_namespace" {
 }
 
 resource "kubernetes_deployment" "apigee_remote_service_envoy" {
+  depends_on = [data.external.apigee_remote_setup]
   metadata {
     name      = "apigee-remote-service-envoy"
     namespace = var.apigee_remote_namespace
@@ -243,9 +284,9 @@ resource "kubernetes_secret" "apigee_remote_service_envoy_secret" {
   }
 
   data = {
-    "remote-service.crt"        = base64decode(var.apigee_remote_cert)
-    "remote-service.key"        = base64decode(var.apigee_remote_key)
-    "remote-service.properties" = base64decode(var.apigee_remote_properties)
+    "remote-service.crt"        = base64decode(data.external.apigee_remote_setup.result["apigee_remote_cert"])
+    "remote-service.key"        = base64decode(data.external.apigee_remote_setup.result["apigee_remote_key"])
+    "remote-service.properties" = base64decode(data.external.apigee_remote_setup.result["apigee_remote_properties"])
   }
 
   type = "opaque"

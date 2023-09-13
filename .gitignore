@@ -34,4 +34,6 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+# Generated files
 infra/config.yaml
+app/scripts/apigee_sa_analytics.json

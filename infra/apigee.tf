@@ -119,26 +119,3 @@ module "nip-development-hostname" {
   address_name       = "apigee-external"
   subdomain_prefixes = [var.apigee_envgroup_name]
 }
-
-/*****************************************
-  Install Apigee envoy adapter svc
- *****************************************/
-
-# Needs APIGEE_ACCESS_TOKEN to be set during runtime
-data "external" "apigee_remote_setup" {
-  program = ["bash", "${path.module}/scripts/apigee-remote-service-cli.sh"]
-  query = {
-    project_id = var.project_id
-    apigee_runtime = "https://${var.apigee_envgroup_name}.${module.nip-development-hostname.hostname}"
-    apigee_env_name = var.apigee_env_name
-    apigee_namespace = var.apigee_remote_namespace
-    apigee_remote_version = var.apigee_remote_version
-  }
-
-  depends_on = [
-    google_container_node_pool.primary_nodes,
-    module.apigee-x-core,
-    module.apigee-x-bridge-mig,
-    module.mig-l7xlb
-  ]
-}

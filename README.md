@@ -21,23 +21,19 @@ The following must be installed on your local machine, these commands might be r
 * Select the GCP project to install resources
 
 ```sh
-export PROJECT_ID=xxx
 export TF_VAR_project_id=xxx
-gcloud config set project $PROJECT_ID
+gcloud config set project $TF_VAR_project_id
 gcloud auth login
 ```
-> :warning: **If you're running Terraform locally on a Macbook make sure the apigee_remote_os var is set to macOS**
+> :warning: **This might take ~30 mins to spin up**
+## Create the GKE cluster & Apigee infrastructure
 
-## Create the GKE & Apigee
 ```
-export APIGEE_ACCESS_TOKEN="$(gcloud auth print-access-token)";
-
 terraform -chdir=infra init
 terraform -chdir=infra apply -auto-approve
 ```
 
-## Configure the GKE & Apigee
-
+## Configure the GKE cluster & Apigee resources
 ```
 export APIGEE_ACCESS_TOKEN="$(gcloud auth print-access-token)";
 
@@ -54,7 +50,6 @@ gcloud container clusters get-credentials \
 
 export APIGEE_DEV_API_KEY="$(terraform -chdir=app output apigee_developer_key)"
 ```
-
 
 * Ping the httpbin service from curl service again
 
@@ -73,7 +68,7 @@ content-length: 0
 x-envoy-upstream-service-time: 3
 ```
 
-> **_NOTE:_** You might have to ping a few times here.
+> **_NOTE:_** The newly created Apigee products might take ~5mins to get registered. You might have to ping a few times here.
 
 ```sh
 kubectl exec -it deployment/curl -- /bin/sh
@@ -91,20 +86,20 @@ access-control-allow-credentials: true
 x-envoy-upstream-service-time: 22
 {
     "headers": {
-        "Accept": "*/*", 
-        "Host": "httpbin.default.svc.cluster.local", 
-        "User-Agent": "curl/8.2.0", 
-        "X-Api-Key": "developer_client_key_goes_here", 
-        "X-Apigee-Accesstoken": "", 
-        "X-Apigee-Api": "httpbin.default.svc.cluster.local", 
-        "X-Apigee-Apiproducts": "httpbin-product", 
-        "X-Apigee-Application": "httpbin-app", 
-        "X-Apigee-Authorized": "true", 
-        "X-Apigee-Clientid": "developer_client_key_goes_here", 
-        "X-Apigee-Developeremail": "ahamilton@example.com", 
-        "X-Apigee-Environment": "env", 
-        "X-Apigee-Organization": "GCP_ORG_ID", 
-        "X-Apigee-Scope": "", 
+        "Accept": "*/*",
+        "Host": "httpbin.default.svc.cluster.local",
+        "User-Agent": "curl/8.2.0",
+        "X-Api-Key": "developer_client_key_goes_here",
+        "X-Apigee-Accesstoken": "",
+        "X-Apigee-Api": "httpbin.default.svc.cluster.local",
+        "X-Apigee-Apiproducts": "httpbin-product",
+        "X-Apigee-Application": "httpbin-app",
+        "X-Apigee-Authorized": "true",
+        "X-Apigee-Clientid": "developer_client_key_goes_here",
+        "X-Apigee-Developeremail": "ahamilton@example.com",
+        "X-Apigee-Environment": "env",
+        "X-Apigee-Organization": "GCP_ORG_ID",
+        "X-Apigee-Scope": "",
         "X-Envoy-Expected-Rq-Timeout-Ms": "15000",
         "X-Forwarded-Client-Cert": "--cert-redacted--"
     }

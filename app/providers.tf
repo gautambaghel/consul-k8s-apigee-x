@@ -17,6 +17,11 @@ terraform {
       version = ">= 2.0, <3.0"
     }
 
+    local = {
+      source  = "hashicorp/local"
+      version = ">= 2.4.0, < 3.0"
+    }
+
     apigee = {
       source  = "gautambaghel/apigee"
       version = ">= 0.1.0, < 0.2.0"
@@ -33,8 +38,8 @@ data "google_client_config" "provider" {}
 
 data "google_container_cluster" "default" {
   project  = var.project_id
-  name     = var.cluster_name
-  location = var.cluster_location
+  name     = var.gke_cluster_name
+  location = var.gke_cluster_location
 }
 
 provider "kubernetes" {

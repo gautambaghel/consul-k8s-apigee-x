@@ -24,17 +24,18 @@ else
     exit 2
 fi
 
-eval "$(jq -r '@sh "GCP_PROJECT_ID=\(.project_id) APIGEE_RUNTIME=\(.apigee_runtime) APIGEE_ENV=\(.apigee_env_name) APIGEE_NS=\(.apigee_namespace) APIGEE_REMOTE_VERSION=\(.apigee_remote_version)"')"
+eval "$(jq -r '@sh "APIGEE_REMOTE_VERSION=\(.apigee_remote_version) GCP_PROJECT_ID=\(.project_id) APIGEE_ENV=\(.apigee_env_name) APIGEE_RUNTIME=\(.apigee_runtime) APIGEE_NS=\(.apigee_namespace) APIGEE_ANALYTICS_SA=\(.apigee_analytics_sa)"')"
 
 curl -L https://github.com/apigee/apigee-remote-service-cli/releases/download/v${APIGEE_REMOTE_VERSION}/apigee-remote-service-cli_${APIGEE_REMOTE_VERSION}_${APIGEE_REMOTE_OS}_64-bit.tar.gz > apigee-remote-service-cli.tar.gz
 tar -xf apigee-remote-service-cli.tar.gz
 rm apigee-remote-service-cli.tar.gz
-./apigee-remote-service-cli provision \
+./apigee-remote-service-cli provision -f \
 --organization ${GCP_PROJECT_ID} \
 --environment ${APIGEE_ENV} \
 --runtime ${APIGEE_RUNTIME} \
 --namespace ${APIGEE_NS} \
---token ${APIGEE_ACCESS_TOKEN} > config.yaml
+--token ${APIGEE_ACCESS_TOKEN} \
+--analytics-sa ${APIGEE_ANALYTICS_SA}> config.yaml
 rm apigee-remote-service-cli
 rm LICENSE
 rm README.md

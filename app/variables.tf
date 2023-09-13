@@ -12,11 +12,12 @@ variable "region" {
   default     = "us-west1"
 }
 
-variable "cluster_name" {
+variable "gke_cluster_name" {
   description = "GKE cluster name"
+  type        = string
 }
 
-variable "cluster_location" {
+variable "gke_cluster_location" {
   description = "GKE cluster location"
   default     = "us-west1"
 }
@@ -24,6 +25,11 @@ variable "cluster_location" {
 /*****************************************
   Apigee settings
  *****************************************/
+
+variable "apigee_token" {
+  description = "Apigee access token (generate by running 'gcloud auth print-access-token')"
+  type        = string
+}
 
 variable "apigee_runtime" {
   description = "Apigee runtime URL"
@@ -68,22 +74,27 @@ variable "apigee_developer" {
 variable "apigee_remote_namespace" {
   description = "K8s namespace where to install the remote proxy agent"
   type        = string
-  default     = "default"
+  default     = "apigee"
 }
 
-variable "apigee_remote_cert" {
-  description = "Apigee remote proxy cert base64 encoded"
+variable "apigee_remote_version" {
+  description = "Version of the remote proxy agent (see https://github.com/apigee/apigee-remote-service-envoy/tree/main)"
   type        = string
+  default     = "2.1.1"
 }
 
-variable "apigee_remote_key" {
-  description = "Apigee remote proxy key base64 encoded"
+variable "apigee_sa_filename" {
+  description = "Filename for Service Account used for Apigee analytics"
   type        = string
+  default     = "apigee_sa_analytics.json"
 }
 
-variable "apigee_remote_properties" {
-  description = "Apigee remote proxy properties base64 encoded"
-  type        = string
+variable "apigee_sa_roles_list" {
+  description = "Roles required for the Service Account"
+  type        = list(string)
+  default = [
+    "roles/apigee.analyticsAgent",
+  ]
 }
 
 /*****************************************
